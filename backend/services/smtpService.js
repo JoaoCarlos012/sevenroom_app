@@ -42,7 +42,7 @@ async function sendEmail({ to, subject, html }) {
 }
 
 function requiredEnv(name) {
-  const value = process.env[name];
+  const value = process.env[name] && process.env[name].trim();
   if (!value) {
     throw new Error(`${name} is not configured`);
   }
