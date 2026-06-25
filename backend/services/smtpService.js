@@ -33,12 +33,41 @@ async function sendEmail({ to, subject, html }) {
   const from = process.env.EMAIL_FROM || requiredEnv("SMTP_USER");
   const recipients = Array.isArray(to) ? to : [to];
 
+  if (process.env.RESEND_API_KEY) {
+    await sendWithResend({ from, to: recipients, subject, html });
+    return;
+  }
+
   await getTransporter().sendMail({
     from,
     to: recipients,
     subject: subject.trim(),
     html,
   });
+}
+
+async function sendWithResend({ from, to, subject, html }) {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${requiredEnv("RESEND_API_KEY")}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to,
+      subject: subject.trim(),
+      html,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    const error = new Error(`Resend API failed with ${response.status}`);
+    error.code = "RESEND_API_ERROR";
+    error.response = body;
+    throw error;
+  }
 }
 
 function requiredEnv(name) {
