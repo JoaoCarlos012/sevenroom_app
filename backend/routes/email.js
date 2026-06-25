@@ -21,11 +21,21 @@ router.post("/send", authenticate, rateLimit, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error("Email send failed:", {
+      code: error.code,
       message: error.message,
+      response: error.response,
       to: req.body && req.body.to,
       subject: req.body && req.body.subject,
     });
-    res.status(502).json({ success: false, error: "Failed to send email" });
+    const payload = { success: false, error: "Failed to send email" };
+    if (req.authenticatedWithApiSecret) {
+      payload.details = {
+        code: error.code,
+        response: error.response,
+        message: error.message,
+      };
+    }
+    res.status(502).json(payload);
   }
 });
 
@@ -40,6 +50,7 @@ async function authenticate(req, res, next) {
   }
 
   if (expectedToken && token === expectedToken) {
+    req.authenticatedWithApiSecret = true;
     next();
     return;
   }
