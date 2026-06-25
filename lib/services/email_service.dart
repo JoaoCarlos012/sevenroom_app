@@ -9,7 +9,7 @@ import '../models/reservation.dart';
 class EmailService {
   static const String _apiBaseUrl = String.fromEnvironment(
     'EMAIL_API_BASE_URL',
-    defaultValue: '',
+    defaultValue: 'https://sevenroom-email-api.onrender.com',
   );
 
   bool get isConfigured => _apiBaseUrl.isNotEmpty;
